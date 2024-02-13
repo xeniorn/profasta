@@ -62,7 +62,7 @@ class ProteinDatabase:
         self.imported_fasta_files = []
 
     def add_fasta(
-        self, path: str, header_parser: str, fasta_name: Optional[str] = None
+        self, path: str, header_parser: str, fasta_name: Optional[str] = None, overwrite: bool = False,
     ):
         """Add protein entries from a FASTA file to the database.
 
@@ -72,6 +72,9 @@ class ProteinDatabase:
                 The parser must be registered in the global parser registry.
             fasta_name: Optional name for the FASTA file. If not provided, the filename
                 will be used instead.
+            overwrite: If True, overwrite an existing entry with the same identifier.
+                If False and an entry with the same identifier already exists, a
+                KeyError will be raised.
         """
         if fasta_name is None:
             fasta_name = Path(path).name
@@ -87,7 +90,7 @@ class ProteinDatabase:
                     fasta_record.sequence,
                     parsed_header.header_fields,
                 )
-                self.add_entry(protein_entry)
+                self.add_entry(protein_entry, overwrite)
 
     def add_entry(self, protein_entry: AbstractDatabaseEntry, overwrite: bool = False):
         """Add a protein entry to the database.
@@ -139,6 +142,9 @@ class ProteinDatabase:
 
     def __getitem__(self, identifier):
         return self.db[identifier]
+
+    def __contains__(self, identifier):
+        return identifier in self.db
 
     def __iter__(self):
         return iter(self.db)
