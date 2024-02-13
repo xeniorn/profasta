@@ -151,6 +151,78 @@ class UniprotParser:
         return " ".join(header_entries)
 
 
+class UniprotLikeParser:
+    """A tolerant FASTA header parser for UniProt like headers."""  
+    field_pattern = re.compile(
+        r"(?:(\s+OS=(?P<OS>[^=]+))|"
+        r"(\s+OX=(?P<OX>\d+))|"
+        r"(\s+GN=(?P<GN>\S+))|"
+        r"(\s+PE=(?P<PE>\d))|"
+        r"(\s+SV=(?P<SV>\d+)))*\s*$"        
+    )
+
+    tag_names = {
+        "OS": "organism_name",
+        "OX": "organism_identifier",
+        "GN": "gene_name",
+        "PE": "protein_existence",
+        "SV": "sequence_version",
+    }
+
+    @classmethod
+    def parse(cls, header: str) -> ParsedHeader:
+        """Parse a FASTA header string into a ParsedHeader object."""
+        split_header = header.split(maxsplit=1)
+        try:
+            db, _id, entry = split_header[0].split("|")
+        except ValueError:
+            raise ValueError(
+                f"Header does not match the minimal UniProt like pattern: {header}"
+            )
+        fields = {"db": db, "identifier": _id, "entry_name": entry}
+
+        if len(split_header) == 1:
+            return ParsedHeader(fields["identifier"], header, fields)
+        
+        description = split_header[1]
+        tag_positions = [description.find(f"{tag}=") for tag in cls.tag_names]
+        matched_start = sorted([num for num in tag_positions if num >= 0])
+        matched_end = matched_start[1:] + [len(description)]
+
+        if not matched_start:  # Description contains only the protein name
+            fields["protein_name"] = description
+        elif matched_start[0] != 0:  # Description contains protein name and tag fields
+            fields["protein_name"] = description[:matched_start[0]].rstrip()
+
+        if matched_start:  # Header contains tag fields
+            for start, end in zip(matched_start, matched_end):
+                matched_field = description[start:end].rstrip().split("=", maxsplit=1)
+                fields[matched_field[0]] = matched_field[1]
+        
+        for old_tag, new_tag in cls.tag_names.items():
+            if old_tag in fields:
+                fields[new_tag] = fields.pop(old_tag)
+
+        return ParsedHeader(fields["identifier"], header, fields)
+
+    @classmethod
+    def write(cls, parsed_header: AbstractParsedHeader) -> str:
+        """Write a FASTA header string from a ParsedHeader object."""
+        fields = parsed_header.header_fields
+        header_entries = [
+            f"{fields['db']}|{fields['identifier']}|{fields['entry_name']}",
+        ]
+        if "protein_name" in fields:
+            header_entries.append(f"{fields['protein_name']}")
+
+        for key in ["OS", "OX", "GN", "PE", "SV"]:
+            field_name = cls.field_names[key]
+            if field_name not in fields:
+                continue
+            header_entries.append(f"{key}={fields[field_name]}")
+        return " ".join(header_entries)
+
+
 def register_parser(name: str, parser: HeaderParser):
     """Register a custom parser by name."""
     PARSER_REGISTRY[name] = parser
@@ -164,4 +236,5 @@ def get_parser(parser_name: str) -> HeaderParser:
 PARSER_REGISTRY: dict[str, HeaderParser] = {
     "default": DefaultParser,
     "uniprot": UniprotParser,
+    "uniprot_like": UniprotLikeParser,
 }
