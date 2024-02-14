@@ -47,16 +47,16 @@ pip uninstall profasta
 
 ## Planned features
 **Main requirements**
-- [+] parse FASTA file
-- [+] parse FASTA header
-    - [+] built-in parser that never fails
-    - [+] built-in parser for uniprot format
-    - [+] allow user defined parser
-- [+] write FASTA file
-    -[+] allow custom FASTA header generation
+- [x] parse FASTA file
+- [x] parse FASTA header
+    - [x] built-in parser that never fails
+    - [x] built-in parser for uniprot format
+    - [x] allow user defined parser
+- [x] write FASTA file
+    -[x] allow custom FASTA header generation
     
 **Additional features**
-- [+] read multiple FASTA files and write a combined file
+- [x] read multiple FASTA files and write a combined file
 - [ ] add protein records to an existing FASTA file
 - [ ] generate decoy protein records by reversing the sequence
     - [ ] add decoy protein records to an existing FASTA file
