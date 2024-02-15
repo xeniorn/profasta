@@ -152,13 +152,14 @@ class UniprotParser:
 
 
 class UniprotLikeParser:
-    """A tolerant FASTA header parser for UniProt like headers."""  
+    """A tolerant FASTA header parser for UniProt like headers."""
+
     field_pattern = re.compile(
         r"(?:(\s+OS=(?P<OS>[^=]+))|"
         r"(\s+OX=(?P<OX>\d+))|"
         r"(\s+GN=(?P<GN>\S+))|"
         r"(\s+PE=(?P<PE>\d))|"
-        r"(\s+SV=(?P<SV>\d+)))*\s*$"        
+        r"(\s+SV=(?P<SV>\d+)))*\s*$"
     )
 
     tag_names = {
@@ -183,7 +184,7 @@ class UniprotLikeParser:
 
         if len(split_header) == 1:
             return ParsedHeader(fields["identifier"], header, fields)
-        
+
         description = split_header[1]
         tag_positions = [description.find(f"{tag}=") for tag in cls.tag_names]
         matched_start = sorted([num for num in tag_positions if num >= 0])
@@ -192,13 +193,13 @@ class UniprotLikeParser:
         if not matched_start:  # Description contains only the protein name
             fields["protein_name"] = description
         elif matched_start[0] != 0:  # Description contains protein name and tag fields
-            fields["protein_name"] = description[:matched_start[0]].rstrip()
+            fields["protein_name"] = description[: matched_start[0]].rstrip()
 
         if matched_start:  # Header contains tag fields
             for start, end in zip(matched_start, matched_end):
                 matched_field = description[start:end].rstrip().split("=", maxsplit=1)
                 fields[matched_field[0]] = matched_field[1]
-        
+
         for old_tag, new_tag in cls.tag_names.items():
             if old_tag in fields:
                 fields[new_tag] = fields.pop(old_tag)
@@ -216,7 +217,7 @@ class UniprotLikeParser:
             header_entries.append(f"{fields['protein_name']}")
 
         for key in ["OS", "OX", "GN", "PE", "SV"]:
-            field_name = cls.field_names[key]
+            field_name = cls.tag_names[key]
             if field_name not in fields:
                 continue
             header_entries.append(f"{key}={fields[field_name]}")
