@@ -12,7 +12,7 @@ Classes:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Iterator, Optional, Protocol
 
 from profasta.parser import get_parser
 import profasta.io
@@ -146,15 +146,15 @@ class ProteinDatabase:
         with open(path, file_open_mode) as file:
             profasta.io.write_fasta(file, fasta_records, line_width)
 
-    def get(self, identifier: str, default: Any = None):
+    def get(self, identifier: str, default: Any = None) -> DatabaseEntry | Any:
         """Get a protein entry by its identifier or return a default value."""
         return self.db.get(identifier, default)
 
-    def __getitem__(self, identifier):
+    def __getitem__(self, identifier) -> AbstractDatabaseEntry:
         return self.db[identifier]
 
-    def __contains__(self, identifier):
+    def __contains__(self, identifier) -> bool:
         return identifier in self.db
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.db)
