@@ -50,3 +50,20 @@ def test_protein_database_read_write_fasta_roundtrip(tmp_path):
     for identifier in db:
         assert db[identifier].header == db2[identifier].header
         assert db[identifier].sequence == db2[identifier].sequence
+
+
+def test_protein_database_write_fasta_in_append_mode(tmp_path):
+    temp_fasta_path = tmp_path / "written_from_db.fasta"
+    db_write = profasta.db.ProteinDatabase()
+    db_write.add_fasta(FASTA_PATH, header_parser="default")
+    db_write.write_fasta(temp_fasta_path)
+
+    db_append = profasta.db.ProteinDatabase()
+    db_append.add_entry(profasta.db.DatabaseEntry("test_header", "test_header", "seq", {}))  # fmt: skip
+    db_append.write_fasta(temp_fasta_path, append=True)
+
+    db_read = profasta.db.ProteinDatabase()
+    db_read.add_fasta(temp_fasta_path, header_parser="default")
+
+    for identifier in [*db_write, *db_append]:
+        assert identifier in db_read

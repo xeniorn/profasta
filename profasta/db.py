@@ -62,7 +62,11 @@ class ProteinDatabase:
         self.imported_fasta_files = []
 
     def add_fasta(
-        self, path: str, header_parser: str, fasta_name: Optional[str] = None, overwrite: bool = False,
+        self,
+        path: str,
+        header_parser: str,
+        fasta_name: Optional[str] = None,
+        overwrite: bool = False,
     ):
         """Add protein entries from a FASTA file to the database.
 
@@ -109,12 +113,18 @@ class ProteinDatabase:
         self.db[protein_entry.identifier] = protein_entry
 
     def write_fasta(
-        self, path, header_parser: Optional[str] = None, line_width: int = 60
+        self,
+        path,
+        append: bool = False,
+        header_parser: Optional[str] = None,
+        line_width: int = 60,
     ):
         """Write all protein entries in the database to a FASTA file.
 
         Args:
             path: The path to write the FASTA file to.
+            append: If False, the file is created or overwritten. If True, the entries
+                are appended to an existing file. The default value is False.
             header_parser: The name of the parser to use for generating the FASTA header
                 strings. If None, the header strings are not parsed and the original
                 header strings are written to the FASTA file.
@@ -132,8 +142,8 @@ class ProteinDatabase:
                 fasta_records.append(
                     DatabaseEntry("", header, protein_entry.sequence, {})
                 )
-
-        with open(path, "w") as file:
+        file_open_mode = "a" if append else "w"
+        with open(path, file_open_mode) as file:
             profasta.io.write_fasta(file, fasta_records, line_width)
 
     def get(self, identifier: str, default: Any = None):
