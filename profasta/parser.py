@@ -1,26 +1,37 @@
-"""This module manages parsers for the headers of FASTA records.
+"""This module manages parsers and writer for the headers of FASTA records.
 
 This module provides classes for parsing the headers of FASTA records into a structured
 format and writing the structured format back to a header string. The default FASTA
-header parsers are registered in a global registry, which can be accessed via the
-`get_parser` function and the name of the parser. New parsers must be registered via
-the `register_parser` function before they become available in the other modules.
+header parsers and writers are registered in a global registry, which can be accessed
+via the `get_parser` and `get_writer` functions and the name of the parser or writer.
+New parsers and writers must be registered via the `register_parser` and
+`register_writer` functions before they become available in the other modules.
 
 Classes:
     AbstractParsedHeader (Protocol): Interface for representing a parsed FASTA header.
     ParsedHeader: Representation of a parsed FASTA header.
     HeaderParser (Protocol): Interface for a FASTA header parser.
+    HeaderWriter (Protocol): Interface for a FASTA header writer.
     DefaultParser: Default FASTA header parser.
     UniprotParser: Parser for Uniprot FASTA headers.
+    UniprotLikeParser: Parser for less strict Uniprot like FASTA headers.
+    DefaultWriter: Default FASTA header writer.
+    UniprotWriter: Parser for Uniprot FASTA writer.
+    UniprotLikeWriter: Parser for less strict Uniprot like FASTA writer.
 
 Functions:
     register_parser: Register a custom FASTA header parser by name.
     get_parser: Get a registered FASTA header parser by name.
+    register_writer: Register a custom FASTA header writer by name.
+    get_writer: Get a registered FASTA header writer by name.
 
 Constants:
-    PARSER_REGISTRY: Dictionary mapping parser names to header parsers. The built-in
-        parsers are registered as "default" and "uniprot" and can be retrieved via the
-        `get_parser` function.
+    PARSER_REGISTRY: Dictionary mapping parser names to header parser classes. The
+        built-in parsers are registered as "default", "uniprot", "uniprot_like" and can
+        be retrieved via the `get_parser` function.
+    WRITER_REGISTRY: Dictionary mapping writer names to header writer classes. The
+        built-in writers are registered as "default", "uniprot", "uniprot_like" and can
+        be retrieved via the `get_writer` function.
 """
 
 from dataclasses import dataclass, field
@@ -65,6 +76,10 @@ class HeaderParser(Protocol):
         """Parse a FASTA header string into a ParsedHeader object."""
         ...
 
+
+class HeaderWriter(Protocol):
+    """Abstract header writer."""
+
     @classmethod
     def write(self, parsed_header: AbstractParsedHeader) -> str:
         """Write a FASTA header string from a ParsedHeader object."""
@@ -89,6 +104,13 @@ class DefaultParser:
         _id = split_header[0]
         fields = {"description": split_header[1]} if len(split_header) > 1 else {}
         return ParsedHeader(_id, header, fields)
+
+
+class DefaultWriter:
+    """Default FASTA header writer.
+
+    The `write` method returns the original `header` string from the parsed_header.
+    """
 
     @classmethod
     def write(cls, parsed_header: AbstractParsedHeader) -> str:
@@ -134,6 +156,22 @@ class UniprotParser:
         fields = {cls.field_names[key]: value for key, value in fields.items()}
 
         return ParsedHeader(fields["identifier"], header, fields)
+
+
+class UniprotWriter:
+    """Uniprot FASTA header writer."""
+
+    field_names = {
+        "db": "db",
+        "id": "identifier",
+        "entry": "entry_name",
+        "name": "protein_name",
+        "OS": "organism_name",
+        "OX": "organism_identifier",
+        "GN": "gene_name",
+        "PE": "protein_existence",
+        "SV": "sequence_version",
+    }
 
     @classmethod
     def write(cls, parsed_header: AbstractParsedHeader) -> str:
@@ -206,6 +244,23 @@ class UniprotLikeParser:
 
         return ParsedHeader(fields["identifier"], header, fields)
 
+
+class UniprotLikeWriter:
+    """A tolerant FASTA header writer for UniProt like headers.
+
+    In contrast to a strict UniProt header, the only required fields are the database,
+    the identifier, and the entry name. The other fields are optional and can be
+    omitted.
+    """
+
+    tag_names = {
+        "OS": "organism_name",
+        "OX": "organism_identifier",
+        "GN": "gene_name",
+        "PE": "protein_existence",
+        "SV": "sequence_version",
+    }
+
     @classmethod
     def write(cls, parsed_header: AbstractParsedHeader) -> str:
         """Write a FASTA header string from a ParsedHeader object."""
@@ -234,8 +289,25 @@ def get_parser(parser_name: str) -> HeaderParser:
     return PARSER_REGISTRY[parser_name]
 
 
+def register_writer(name: str, parser: HeaderWriter):
+    """Register a custom writer by name."""
+    WRITER_REGISTRY[name] = parser
+
+
+def get_writer(parser_name: str) -> HeaderWriter:
+    """Get a registered writer by name."""
+    return WRITER_REGISTRY[parser_name]
+
+
 PARSER_REGISTRY: dict[str, HeaderParser] = {
     "default": DefaultParser,
     "uniprot": UniprotParser,
     "uniprot_like": UniprotLikeParser,
+}
+
+
+WRITER_REGISTRY: dict[str, HeaderWriter] = {
+    "default": DefaultWriter,
+    "uniprot": UniprotWriter,
+    "uniprot_like": UniprotLikeWriter,
 }

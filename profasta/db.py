@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Optional, Protocol
 
-from profasta.parser import get_parser
+from profasta.parser import get_parser, get_writer
 import profasta.io
 
 
@@ -116,7 +116,7 @@ class ProteinDatabase:
         self,
         path,
         append: bool = False,
-        header_parser: Optional[str] = None,
+        header_writer: Optional[str] = None,
         line_width: int = 60,
     ):
         """Write all protein entries in the database to a FASTA file.
@@ -125,19 +125,19 @@ class ProteinDatabase:
             path: The path to write the FASTA file to.
             append: If False, the file is created or overwritten. If True, the entries
                 are appended to an existing file. The default value is False.
-            header_parser: The name of the parser to use for generating the FASTA header
-                strings. If None, the header strings are not parsed and the original
-                header strings are written to the FASTA file.
+            header_writer: The name of the writer to use for generating the FASTA header
+                strings from the database entries. If None, the original header strings
+                are written to the FASTA file.
             line_width: The number of sequence characters per line, the default value is
                 60. If -1, the sequence is not split into multiple lines.
         """
-        if header_parser is None:
+        if header_writer is None:
             fasta_records = list(self.db.values())
         else:
             fasta_records = []
-            parser = get_parser(header_parser)
+            writer = get_writer(header_writer)
             for protein_entry in self.db.values():
-                header = parser.write(protein_entry)
+                header = writer.write(protein_entry)
 
                 fasta_records.append(
                     DatabaseEntry("", header, protein_entry.sequence, {})

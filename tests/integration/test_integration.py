@@ -12,6 +12,8 @@ class CustomParser:
     def parse(cls, header):
         return profasta.parser.ParsedHeader(header, header)
 
+
+class CustomWriter:
     @classmethod
     def write(self, parsed_header):
         return parsed_header.header
@@ -19,22 +21,26 @@ class CustomParser:
 
 def test_built_in_uniprot_header_parser_read_write_header_roundtrip():
     UniprotParser = profasta.parser.get_parser("uniprot")
+    UniprotWriter = profasta.parser.get_writer("uniprot")
 
     with open(FASTA_PATH, "r") as file:
         for fasta_record in profasta.io.parse_fasta(file):
             parsed_header = UniprotParser.parse(fasta_record.header)
-            written_header = UniprotParser.write(parsed_header)
+            written_header = UniprotWriter.write(parsed_header)
             assert fasta_record.header == written_header
 
 
 def test_custom_header_parser_read_write_header_roundtrip():
-    profasta.parser.register_parser("custom_test_parser", CustomParser)
-    PlainParser = profasta.parser.get_parser("custom_test_parser")
+    profasta.parser.register_parser("test_parser", CustomParser)
+    profasta.parser.register_writer("test_writer", CustomWriter)
+
+    TestParser = profasta.parser.get_parser("test_parser")
+    TestWriter = profasta.parser.get_writer("test_writer")
 
     with open(FASTA_PATH, "r") as file:
         for fasta_record in profasta.io.parse_fasta(file):
-            parsed_header = PlainParser.parse(fasta_record.header)
-            written_header = PlainParser.write(parsed_header)
+            parsed_header = TestParser.parse(fasta_record.header)
+            written_header = TestWriter.write(parsed_header)
             assert fasta_record.header == written_header
 
 
@@ -42,7 +48,7 @@ def test_protein_database_read_write_fasta_roundtrip(tmp_path):
     temp_fasta_path = tmp_path / "written_from_db.fasta"
     db = profasta.ProteinDatabase()
     db.add_fasta(FASTA_PATH, header_parser="default")
-    db.write_fasta(temp_fasta_path, header_parser="default")
+    db.write_fasta(temp_fasta_path, header_writer="default")
 
     db2 = profasta.ProteinDatabase()
     db2.add_fasta(temp_fasta_path, header_parser="default")
