@@ -12,9 +12,9 @@ Classes:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Iterator, Optional, Protocol
 
-from profasta.parser import get_parser
+from profasta.parser import get_parser, get_writer
 import profasta.io
 
 
@@ -62,7 +62,11 @@ class ProteinDatabase:
         self.imported_fasta_files = []
 
     def add_fasta(
-        self, path: str, header_parser: str, fasta_name: Optional[str] = None, overwrite: bool = False,
+        self,
+        path: str,
+        header_parser: str,
+        fasta_name: Optional[str] = None,
+        overwrite: bool = False,
     ):
         """Add protein entries from a FASTA file to the database.
 
@@ -109,42 +113,48 @@ class ProteinDatabase:
         self.db[protein_entry.identifier] = protein_entry
 
     def write_fasta(
-        self, path, header_parser: Optional[str] = None, line_width: int = 60
+        self,
+        path,
+        append: bool = False,
+        header_writer: Optional[str] = None,
+        line_width: int = 60,
     ):
         """Write all protein entries in the database to a FASTA file.
 
         Args:
             path: The path to write the FASTA file to.
-            header_parser: The name of the parser to use for generating the FASTA header
-                strings. If None, the header strings are not parsed and the original
-                header strings are written to the FASTA file.
+            append: If False, the file is created or overwritten. If True, the entries
+                are appended to an existing file. The default value is False.
+            header_writer: The name of the writer to use for generating the FASTA header
+                strings from the database entries. If None, the original header strings
+                are written to the FASTA file.
             line_width: The number of sequence characters per line, the default value is
                 60. If -1, the sequence is not split into multiple lines.
         """
-        if header_parser is None:
+        if header_writer is None:
             fasta_records = list(self.db.values())
         else:
             fasta_records = []
-            parser = get_parser(header_parser)
+            writer = get_writer(header_writer)
             for protein_entry in self.db.values():
-                header = parser.write(protein_entry)
+                header = writer.write(protein_entry)
 
                 fasta_records.append(
                     DatabaseEntry("", header, protein_entry.sequence, {})
                 )
-
-        with open(path, "w") as file:
+        file_open_mode = "a" if append else "w"
+        with open(path, file_open_mode) as file:
             profasta.io.write_fasta(file, fasta_records, line_width)
 
-    def get(self, identifier: str, default: Any = None):
+    def get(self, identifier: str, default: Any = None) -> DatabaseEntry | Any:
         """Get a protein entry by its identifier or return a default value."""
         return self.db.get(identifier, default)
 
-    def __getitem__(self, identifier):
+    def __getitem__(self, identifier) -> AbstractDatabaseEntry:
         return self.db[identifier]
 
-    def __contains__(self, identifier):
+    def __contains__(self, identifier) -> bool:
         return identifier in self.db
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.db)

@@ -57,8 +57,8 @@ pip uninstall profasta
     
 **Additional features**
 - [x] read multiple FASTA files and write a combined file
-- [ ] add protein records to an existing FASTA file
-- [ ] generate decoy protein records by reversing the sequence
-    - [ ] add decoy protein records to an existing FASTA file
+- [x] add protein records to an existing FASTA file
+- [x] generate decoy protein records by reversing the sequence
+    - [x] add decoy protein records to an existing FASTA file
 - [ ] validate FASTA file / FASTA records
 

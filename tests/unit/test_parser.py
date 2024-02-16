@@ -21,7 +21,9 @@ class TestUniprotLikeParser:
         assert parsed_header.header_fields == expected_fields
 
     def test_parse_partial_uniprot_header_with_some_tag_fields_missing(self):
-        header = "sp|O75385|ULK1_HUMAN Serine/threonine-protein kinase ULK1 OX=9606 GN=ULK1"
+        header = (
+            "sp|O75385|ULK1_HUMAN Serine/threonine-protein kinase ULK1 OX=9606 GN=ULK1"
+        )
         expected_fields = {
             "db": "sp",
             "identifier": "O75385",
@@ -59,7 +61,7 @@ class TestUniprotLikeParser:
 
         parsed_header = profasta.parser.UniprotLikeParser.parse(header)
         assert parsed_header.header_fields == expected_fields
-   
+
     def test_parse_minimal_uniprot_header_with_no_description(self):
         header = "sp|O75385|ULK1_HUMAN"
         expected_fields = {
@@ -72,3 +74,8 @@ class TestUniprotLikeParser:
         assert parsed_header.header_fields == expected_fields
 
 
+def test_decoy_writer():
+    header = "sp|O75385|ULK1_HUMAN"
+    parsed_header = profasta.parser.ParsedHeader("", header, {})
+    decoy_header = profasta.parser.DecoyWriter.write(parsed_header)
+    assert decoy_header == "rev_" + header

@@ -12,7 +12,7 @@ Functions:
 """
 
 from dataclasses import dataclass
-from typing import Generator, Iterable, TextIO, Protocol
+from typing import Generator, Iterable, IO, Protocol
 
 
 class AbstractFastaRecord(Protocol):
@@ -40,7 +40,7 @@ class FastaRecord:
     sequence: str
 
 
-def parse_fasta(file_object: TextIO) -> Generator[FastaRecord, None, None]:
+def parse_fasta(file_object: IO[str]) -> Generator[FastaRecord, None, None]:
     """Parse a FASTA file object and yield FastaRecords.
 
     Lines starting with ">" are header lines, all others are sequence lines.
@@ -65,7 +65,7 @@ def parse_fasta(file_object: TextIO) -> Generator[FastaRecord, None, None]:
 
 
 def write_fasta(
-    file_object: TextIO,
+    file_object: IO[str],
     fasta_records: Iterable[AbstractFastaRecord],
     line_width: int = -1,
 ):
