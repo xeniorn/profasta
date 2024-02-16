@@ -118,6 +118,21 @@ class DefaultWriter:
         return parsed_header.header
 
 
+class DecoyWriter:
+    """A FASTA header writer for decoy entries.
+
+    The `write` method returns the original `header` string from the parsed_header
+    prefixed with a tag "rev_" to indicate that the entry is a decoy.
+    """
+
+    decoy_tag: str = "rev_"
+
+    @classmethod
+    def write(cls, parsed_header: AbstractParsedHeader) -> str:
+        """Write a FASTA header string from a ParsedHeader object."""
+        return f"{cls.decoy_tag}{parsed_header.header}"
+
+
 class UniprotParser:
     """Uniprot FASTA header parser."""
 
@@ -308,6 +323,7 @@ PARSER_REGISTRY: dict[str, HeaderParser] = {
 
 WRITER_REGISTRY: dict[str, HeaderWriter] = {
     "default": DefaultWriter,
+    "decoy": DecoyWriter,
     "uniprot": UniprotWriter,
     "uniprot_like": UniprotLikeWriter,
 }
