@@ -67,3 +67,18 @@ def test_protein_database_write_fasta_in_append_mode(tmp_path):
 
     for identifier in [*db_write, *db_append]:
         assert identifier in db_read
+
+
+def test_create_decoy_database(tmp_path):
+    decoy_fasta_path = tmp_path / "decoy.fasta"
+    db = profasta.ProteinDatabase()
+    db.add_fasta(FASTA_PATH, header_parser="uniprot")
+    decoy_db = profasta.decoy.create_decoy_db(db, keep_nterm=False, keep_nterm_methionine=False)  # fmt: skip
+    decoy_db.write_fasta(decoy_fasta_path)
+
+    db2 = profasta.ProteinDatabase()
+    db2.add_fasta(decoy_fasta_path, header_parser="uniprot")
+
+    for identifier in db:
+        assert db[identifier].header == db2[identifier].header
+        assert db[identifier].sequence == db2[identifier].sequence[::-1]
