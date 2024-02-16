@@ -8,4 +8,4 @@ import profasta.io
 
 __author__ = "David M. Hollenstein"
 __license__ = "MIT"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
