@@ -1,5 +1,6 @@
 """ProFASTA - A Python library for working with protein containing FASTA files."""
-import profasta.db
+
+from profasta.db import DatabaseEntry, ProteinDatabase
 import profasta.parser
 import profasta.io
 
