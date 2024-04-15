@@ -46,3 +46,37 @@ class TestMakeRecordString:
     def test_with_line_width_longer_than_the_sequence(self, setup):
         expected = ">Header\nACGTACGTACGTACGT"
         assert profasta.io.make_record_string(self.header, self.sequence, line_width=99) == expected  # fmt: skip
+
+
+
+@pytest.mark.parametrize(
+    "fasta_file_contents, expected_sequence",
+    [
+        (">H1\nDAVID", "DAVID"),
+        (">H1\nDAVID*", "DAVID"),        
+        (">H1\n*DAVID*", "DAVID"),                
+        (">H1\n*D A.V-I+D*", "DAVID"),                        
+        (">H1\ndavid", "DAVID")               
+    ],
+)    
+def test_parse_fasta_file_correctly_parses_and_standardizes_sequences(fasta_file_contents: str, expected_sequence: str):
+    file_buffer = io.StringIO(fasta_file_contents)    
+    fasta_parser = profasta.io.parse_fasta(file_buffer, strict = True)    
+    
+    record = next(fasta_parser)
+    assert record.sequence == expected_sequence
+    
+
+@pytest.mark.parametrize(
+    "fasta_file_contents",
+    [
+        ">H1\nDAV*ID",
+        ">H1\nDAV33D",                          
+    ],
+)    
+def test_parse_fasta_file_fails_on_invalid_input_with_strict(fasta_file_contents: str):
+    file_buffer = io.StringIO(fasta_file_contents)
+    
+    with pytest.raises(Exception):
+        fasta_parser = profasta.io.parse_fasta(file_buffer, strict = True)
+        record = next(fasta_parser)

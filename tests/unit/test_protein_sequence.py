@@ -18,7 +18,7 @@ class TestProteinSequenceParsers:
             ("xxATx", "XXATX")            
         ],
     )    
-    def test_canonicalize_success_valid_sequences(self, sequence, expected_result):                
+    def test_canonicalize_success_valid_sequences(self, sequence: str, expected_result: str):                
         result: str = profasta.protein_sequence.make_canonical_sequence(sequence)
         assert result == expected_result
 
@@ -35,7 +35,7 @@ class TestProteinSequenceParsers:
             ("**aC-d.e++fgHIk" + "\t \t" + "l..m---n" + "\t" + "pq rs tv XY* **", "ACDEFGHIKLMNPQRSTVXY"),                                                
         ],
     )    
-    def test_canonicalize_success_odd_but_unambiguous_sequences(self, sequence, expected_result):                
+    def test_canonicalize_success_odd_but_unambiguous_sequences(self, sequence: str, expected_result: str):                
         result: str = profasta.protein_sequence.make_canonical_sequence(sequence)
         assert result == expected_result        
 
@@ -56,11 +56,7 @@ class TestProteinSequenceParsers:
             "BAHEL"                                                                                     
         ],
     )    
-    def test_canonicalize_fail_invalid_sequences(self, sequence):
+    def test_canonicalize_fail_invalid_sequences(self, sequence: str):
         with pytest.raises(Exception):
             result: str = profasta.protein_sequence.make_canonical_sequence(sequence)
         
-        
-def tryme():
-    sequence = "**aC-d.e++fgHIk" + "\t \t" + "l..m---n" + "\t" + "pq rs tv XY* **"
-    profasta.protein_sequence.make_canonical_sequence(sequence)
