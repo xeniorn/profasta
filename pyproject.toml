@@ -5,6 +5,7 @@ readme = "README.md"
 license = { file = "LICENSE.md" }
 authors = [
     { name = "David M. Hollenstein", email = "hollenstein.david@gmail.com" },
+    { name = "Juraj Ahel", email = "juraj.ahel@gmail.com" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
