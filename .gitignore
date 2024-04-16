@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 #local dot-prefixed folders in general
-.*/
+
 
 # C extensions
 *.so
