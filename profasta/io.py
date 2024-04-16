@@ -10,10 +10,13 @@ Functions:
     parse_fasta: Parse a FASTA file object and return a list of FastaRecords.
     write_fasta: Write a list of FastaRecords to a file object.
 """
+import logging
+logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
 from typing import Generator, Iterable, IO, Protocol
 
+from profasta.protein_sequence import make_canonical_sequence
 
 class AbstractFastaRecord(Protocol):
     """Abstract FASTA file record.
@@ -38,9 +41,10 @@ class FastaRecord:
 
     header: str
     sequence: str
+           
+    
 
-
-def parse_fasta(file_object: IO[str]) -> Generator[FastaRecord, None, None]:
+def parse_fasta(file_object: IO[str], strict: bool = False) -> Generator[FastaRecord, None, None]:
     """Parse a FASTA file object and yield FastaRecords.
 
     Lines starting with ">" are header lines, all others are sequence lines.
@@ -49,6 +53,7 @@ def parse_fasta(file_object: IO[str]) -> Generator[FastaRecord, None, None]:
 
     Args:
         file_object: A file object to parse.
+        strict: Whether to insist that every entry must be parsed, or make it best-effort
 
     Yields:
         Yields FastaRecords.
@@ -57,11 +62,32 @@ def parse_fasta(file_object: IO[str]) -> Generator[FastaRecord, None, None]:
     if not fasta_text.startswith("\n"):
         fasta_text = "\n" + fasta_text
 
+    invalid_seqs: list[str] = []
+    seq_count: int = 0    
+
     for block in fasta_text.split("\n>")[1:]:
         lines = block.split("\n")
         header = lines[0].strip()
         sequence = "".join(lines[1:]).replace(" ", "")
-        yield FastaRecord(header, sequence)
+        seq_count+=1
+        try:
+            sequence = make_canonical_sequence(sequence)
+            yield FastaRecord(header, sequence)     
+        except Exception as ex:
+            invalid_seqs.append(f"{header}\n{sequence}")
+            # let it be for now, so that we can report all of the bad ones, not just the first one that occurred
+            pass
+        
+    if any(invalid_seqs):
+        invalid_seq_string: str = '\n'.join(invalid_seqs)
+        message = f"Some of the sequences are not valid ({len(invalid_seqs)}/{seq_count}):\n{invalid_seq_string}"
+        if strict:
+            raise Exception(message)        
+        else:
+            logger.warning(message)
+                                                        
+                                
+        
 
 
 def write_fasta(
